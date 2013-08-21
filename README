@@ -1,9 +1,10 @@
 Introduction
 ============
 
-This is a very small untar utility written in C. It's meant to be embedded
-within code. I wrote this because the only other option seemed to be zlib, 
-which was overkill.
+This is a very small untar (TAR archiver reader) utility written in C. It's 
+meant to be embedded within code. I wrote this because the only other option 
+seemed to be zlib, which was overkill. There are no library dependencies
+other than the "math" library (for some standard math calls).
 
 
 How it Works
@@ -48,10 +49,10 @@ directories mentioned in the "can't write" error messages.
 Notes
 =====
 
-This utility supports both the primitive and USTAR formats, but none of the
-vendor specific ones that may exist. I wrote it according to the specifications
-that I had available.
+This utility supports both the primitive and USTAR formats (this should be a 
+majority of the TAR files), but none of the vendor-specific formats that may 
+exist. I wrote it according to the specifications that I had available.
 
-If a TAR isn't being successfully read, submit a bug and I'll try to adopt it, 
-if there's a simple fix.
+If a TAR file isn't being successfully read, submit a bug and I'll try to adopt 
+it, if there's a simple fix.
 
