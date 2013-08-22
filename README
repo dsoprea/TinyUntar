@@ -1,7 +1,7 @@
 Introduction
 ============
 
-This is a very small untar (TAR archiver reader) utility written in C. It's 
+This is a very small untar (TAR archive reader) utility written in C. It's 
 meant to be embedded within code. I wrote this because the only other option 
 seemed to be zlib, which was overkill. There are no library dependencies
 other than the "math" library (for some standard math calls).
