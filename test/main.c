@@ -50,15 +50,15 @@ int entry_end_cb(header_translated_t *proper, int entry_index)
 
 int main(int argc, const char* argv[])
 {
+    entry_callbacks_t entry_callbacks = { entry_header_cb, 
+                                          entry_data_cb,
+                                          entry_end_cb };
+
     if(argc < 2)
     {
         printf("Please provide the file-path of a TAR file.\n\n");
         return -1;
     }
-
-    entry_callbacks_t entry_callbacks = { entry_header_cb, 
-                                          entry_data_cb,
-                                          entry_end_cb };
 
     if(read_tar(argv[1], &entry_callbacks) != 0)
     {
