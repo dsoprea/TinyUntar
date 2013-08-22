@@ -19,11 +19,6 @@ static void log_debug(const char *message)
     printf("DEBUG: %s\n", message);
 }
 
-static inline int is_base256_encoded(const char *buffer)
-{
-    return (((unsigned char)buffer[0] & 0x80) > 0);
-}
-
 unsigned long long decode_base256(const char *buffer)
 {
     return 0;
@@ -56,7 +51,6 @@ static void dump_hex(const char *ptr, int length)
 
 char *trim(char *raw, int length)
 {
-    char *trimmed;
     int i = 0;
     int j = length - 1;
     int is_empty = 0;
@@ -109,7 +103,7 @@ int translate_header(header_t *raw_header, header_translated_t *parsed)
     memcpy(buffer, raw_header->filemode, 8);
     buffer_ptr = trim(buffer, 8);
 
-    if(is_base256_encoded(buffer) != 0)
+    if(IS_BASE256_ENCODED(buffer) != 0)
         parsed->filemode = decode_base256(buffer_ptr);
     else
         parsed->filemode = strtoull(buffer_ptr, NULL, R_OCTAL);
@@ -119,7 +113,7 @@ int translate_header(header_t *raw_header, header_translated_t *parsed)
     memcpy(buffer, raw_header->uid, 8);
     buffer_ptr = trim(buffer, 8);
 
-    if(is_base256_encoded(buffer) != 0)
+    if(IS_BASE256_ENCODED(buffer) != 0)
         parsed->uid = decode_base256(buffer_ptr);
     else
         parsed->uid = strtoull(buffer_ptr, NULL, R_OCTAL);
@@ -129,7 +123,7 @@ int translate_header(header_t *raw_header, header_translated_t *parsed)
     memcpy(buffer, raw_header->gid, 8);
     buffer_ptr = trim(buffer, 8);
 
-    if(is_base256_encoded(buffer) != 0)
+    if(IS_BASE256_ENCODED(buffer) != 0)
         parsed->gid = decode_base256(buffer_ptr);
     else
         parsed->gid = strtoull(buffer_ptr, NULL, R_OCTAL);
@@ -139,7 +133,7 @@ int translate_header(header_t *raw_header, header_translated_t *parsed)
     memcpy(buffer, raw_header->filesize, 12);
     buffer_ptr = trim(buffer, 12);
 
-    if(is_base256_encoded(buffer) != 0)
+    if(IS_BASE256_ENCODED(buffer) != 0)
         parsed->filesize = decode_base256(buffer_ptr);
     else
         parsed->filesize = strtoull(buffer_ptr, NULL, R_OCTAL);
@@ -149,7 +143,7 @@ int translate_header(header_t *raw_header, header_translated_t *parsed)
     memcpy(buffer, raw_header->mtime, 12);
     buffer_ptr = trim(buffer, 12);
 
-    if(is_base256_encoded(buffer) != 0)
+    if(IS_BASE256_ENCODED(buffer) != 0)
         parsed->mtime = decode_base256(buffer_ptr);
     else
         parsed->mtime = strtoull(buffer_ptr, NULL, R_OCTAL);
@@ -159,7 +153,7 @@ int translate_header(header_t *raw_header, header_translated_t *parsed)
     memcpy(buffer, raw_header->checksum, 8);
     buffer_ptr = trim(buffer, 8);
 
-    if(is_base256_encoded(buffer) != 0)
+    if(IS_BASE256_ENCODED(buffer) != 0)
         parsed->checksum = decode_base256(buffer_ptr);
     else
         parsed->checksum = strtoull(buffer_ptr, NULL, R_OCTAL);
@@ -203,7 +197,7 @@ int translate_header(header_t *raw_header, header_translated_t *parsed)
         memcpy(buffer, raw_header->device_major, 8);
         buffer_ptr = trim(buffer, 8);
 
-        if(is_base256_encoded(buffer) != 0)
+        if(IS_BASE256_ENCODED(buffer) != 0)
             parsed->device_major = decode_base256(buffer_ptr);
         else
             parsed->device_major = strtoull(buffer_ptr, NULL, R_OCTAL);
@@ -213,7 +207,7 @@ int translate_header(header_t *raw_header, header_translated_t *parsed)
         memcpy(buffer, raw_header->device_minor, 8);
         buffer_ptr = trim(buffer, 8);
 
-        if(is_base256_encoded(buffer) != 0)
+        if(IS_BASE256_ENCODED(buffer) != 0)
             parsed->device_minor = decode_base256(buffer_ptr);
         else
             parsed->device_minor = strtoull(buffer_ptr, NULL, R_OCTAL);
@@ -228,16 +222,6 @@ int translate_header(header_t *raw_header, header_translated_t *parsed)
     }
 
     return 0;
-}
-
-static inline int get_num_blocks(int filesize)
-{
-    return (int)ceil((double)filesize / (double)TAR_BLOCK_SIZE);
-}
-
-static inline int get_last_block_portion_size(int filesize)
-{
-    return filesize % TAR_BLOCK_SIZE;
 }
 
 static int read_block(FILE *fp, char *buffer)
@@ -262,9 +246,7 @@ static int read_block(FILE *fp, char *buffer)
 int read_tar(const char *file_path, entry_callbacks_t *callbacks)
 {
     char buffer[TAR_BLOCK_SIZE + 1];
-    int num_read;
     int header_checked = 0;
-    int header_type;
     int i;
 
     FILE *fp;
@@ -272,9 +254,7 @@ int read_tar(const char *file_path, entry_callbacks_t *callbacks)
     header_t header;
     header_translated_t header_translated;
 
-    char message[200];
     int num_blocks;
-    int filesize;
     int current_data_size;
     int entry_index = 0;
     int empty_count = 0;
@@ -322,7 +302,7 @@ int read_tar(const char *file_path, entry_callbacks_t *callbacks)
             }
         
             i = 0;
-            num_blocks = get_num_blocks(header_translated.filesize);
+            num_blocks = GET_NUM_BLOCKS(header_translated.filesize);
             while(i < num_blocks)
             {
                 if(read_block(fp, buffer) != 0)
@@ -332,7 +312,7 @@ int read_tar(const char *file_path, entry_callbacks_t *callbacks)
                 }
 
                 current_data_size = (i >= num_blocks - 1 ? 
-                                        get_last_block_portion_size(header_translated.filesize) : 
+                                        GET_LAST_BLOCK_PORTION_SIZE(header_translated.filesize) : 
                                         TAR_BLOCK_SIZE);
 
                 buffer[current_data_size] = 0;
@@ -383,8 +363,8 @@ void dump_header(header_translated_t *header)
     printf("device (minor): %llu\n", header->device_minor);
     printf("\n");
 
-    printf("  data blocks = %d\n", get_num_blocks(header->filesize));
-    printf("  last block portion = %d\n", get_last_block_portion_size(header->filesize));
+    printf("  data blocks = %d\n", GET_NUM_BLOCKS(header->filesize));
+    printf("  last block portion = %d\n", GET_LAST_BLOCK_PORTION_SIZE(header->filesize));
     printf("===========================================\n");
     printf("\n");
 }

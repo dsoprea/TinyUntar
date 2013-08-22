@@ -4,6 +4,16 @@
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
+#include <stdlib.h>
+
+#define IS_BASE256_ENCODED(buffer) (((unsigned char)buffer[0] & 0x80) > 0)
+#define GET_NUM_BLOCKS(filesize) (int)ceil((double)filesize / (double)TAR_BLOCK_SIZE)
+#define GET_LAST_BLOCK_PORTION_SIZE(filesize) (filesize % TAR_BLOCK_SIZE)
+
+#ifdef _MSC_VER
+	#define strtoull _strtoui64
+	#define snprintf _snprintf
+#endif
 
 #define TAR_T_NORMAL1 0
 #define TAR_T_NORMAL2 '0'
