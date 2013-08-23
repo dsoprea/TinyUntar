@@ -4,7 +4,9 @@
 
 FILE *fp_writer = NULL;
 
-int entry_header_cb(header_translated_t *proper, int entry_index)
+int entry_header_cb(header_translated_t *proper, 
+                    int entry_index, 
+                    void *context_data)
 {
     dump_header(proper);
     
@@ -28,6 +30,7 @@ int entry_header_cb(header_translated_t *proper, int entry_index)
 
 int entry_data_cb(header_translated_t *proper, 
                   int entry_index, 
+                  void *context_data,
                   char *block, 
                   int length)
 {
@@ -37,7 +40,9 @@ int entry_data_cb(header_translated_t *proper,
     return 0;
 }
 
-int entry_end_cb(header_translated_t *proper, int entry_index)
+int entry_end_cb(header_translated_t *proper, 
+                 int entry_index, 
+                 void *context_data)
 {
     if(fp_writer != NULL)
     {
@@ -60,7 +65,7 @@ int main(int argc, const char* argv[])
         return -1;
     }
 
-    if(read_tar(argv[1], &entry_callbacks) != 0)
+    if(read_tar(argv[1], &entry_callbacks, NULL) != 0)
     {
         printf("Read failed.\n\n");
         return -2;
