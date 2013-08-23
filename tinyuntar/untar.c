@@ -243,7 +243,7 @@ static int read_block(FILE *fp, char *buffer)
     return 0;
 }
 
-int read_tar(const char *file_path, entry_callbacks_t *callbacks)
+int read_tar(const char *file_path, entry_callbacks_t *callbacks, void *context_data)
 {
     char buffer[TAR_BLOCK_SIZE + 1];
     int header_checked = 0;
@@ -295,7 +295,7 @@ int read_tar(const char *file_path, entry_callbacks_t *callbacks)
                 return -4;
             }
 
-            if(callbacks->header_cb(&header_translated, entry_index) != 0)
+            if(callbacks->header_cb(&header_translated, entry_index, context_data) != 0)
             {
                 log_error("Header callback failed.");
                 return -5;
@@ -317,7 +317,7 @@ int read_tar(const char *file_path, entry_callbacks_t *callbacks)
 
                 buffer[current_data_size] = 0;
 
-                if(callbacks->data_cb(&header_translated, entry_index, buffer, current_data_size) != 0)
+                if(callbacks->data_cb(&header_translated, entry_index, context_data, buffer, current_data_size) != 0)
                 {
                     log_error("Data callback failed.");
                     return -7;
@@ -326,7 +326,7 @@ int read_tar(const char *file_path, entry_callbacks_t *callbacks)
                 i++;
             }
 
-            if(callbacks->end_cb(&header_translated, entry_index) != 0)
+            if(callbacks->end_cb(&header_translated, entry_index, context_data) != 0)
             {
                 log_error("End callback failed.");
                 return -5;
@@ -407,4 +407,3 @@ enum entry_type_e get_type_from_char(char raw_type)
 
     return T_OTHER;
 }
-
