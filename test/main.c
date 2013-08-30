@@ -31,11 +31,11 @@ int entry_header_cb(header_translated_t *proper,
 int entry_data_cb(header_translated_t *proper, 
                   int entry_index, 
                   void *context_data,
-                  char *block, 
+                  unsigned char *block, 
                   int length)
 {
     if(fp_writer != NULL)
-        fputs(block, fp_writer);
+        fwrite(block, length, 1, fp_writer);
 
     return 0;
 }

@@ -2,7 +2,7 @@
 
 char *empty_string = "";
 
-int parse_header(const char buffer[512], header_t *header)
+int parse_header(const unsigned char buffer[512], header_t *header)
 {
     memcpy(header, buffer, sizeof(header_t));
 
@@ -19,7 +19,7 @@ static void log_debug(const char *message)
     printf("DEBUG: %s\n", message);
 }
 
-unsigned long long decode_base256(const char *buffer)
+unsigned long long decode_base256(const unsigned char *buffer)
 {
     return 0;
 }
@@ -97,6 +97,7 @@ int translate_header(header_t *raw_header, header_translated_t *parsed)
     memcpy(buffer, raw_header->filename, 100);
     buffer_ptr = trim(buffer, 100);
     strcpy(parsed->filename, buffer_ptr);
+	parsed->filename[strlen(buffer_ptr)] = 0;
 
     //
 
@@ -165,18 +166,21 @@ int translate_header(header_t *raw_header, header_translated_t *parsed)
     memcpy(buffer, raw_header->link_target, 100);
     buffer_ptr = trim(buffer, 100);
     strcpy(parsed->link_target, buffer_ptr);
+	parsed->link_target[strlen(buffer_ptr)] = 0;
 
     //
 
     memcpy(buffer, raw_header->ustar_indicator, 6);
     buffer_ptr = trim(buffer, 6);
     strcpy(parsed->ustar_indicator, buffer_ptr);
+	parsed->ustar_indicator[strlen(buffer_ptr)] = 0;
     
     //
 
     memcpy(buffer, raw_header->ustar_version, 2);
     buffer_ptr = trim(buffer, 2);
     strcpy(parsed->ustar_version, buffer_ptr);
+	parsed->ustar_version[strlen(buffer_ptr)] = 0;
     
     if(strcmp(parsed->ustar_indicator, "ustar") == 0)
     {
@@ -185,12 +189,14 @@ int translate_header(header_t *raw_header, header_translated_t *parsed)
         memcpy(buffer, raw_header->user_name, 32);
         buffer_ptr = trim(buffer, 32);
         strcpy(parsed->user_name, buffer_ptr);
+		parsed->user_name[strlen(buffer_ptr)] = 0;
 
         //
 
         memcpy(buffer, raw_header->group_name, 32);
         buffer_ptr = trim(buffer, 32);
         strcpy(parsed->group_name, buffer_ptr);
+		parsed->group_name[strlen(buffer_ptr)] = 0;
 
         //
 
@@ -224,7 +230,7 @@ int translate_header(header_t *raw_header, header_translated_t *parsed)
     return 0;
 }
 
-static int read_block(FILE *fp, char *buffer)
+static int read_block(FILE *fp, unsigned char *buffer)
 {
     char message[200];
     int num_read;
@@ -245,7 +251,7 @@ static int read_block(FILE *fp, char *buffer)
 
 int read_tar(const char *file_path, entry_callbacks_t *callbacks, void *context_data)
 {
-    char buffer[TAR_BLOCK_SIZE + 1];
+    unsigned char buffer[TAR_BLOCK_SIZE + 1];
     int header_checked = 0;
     int i;
 
@@ -302,6 +308,7 @@ int read_tar(const char *file_path, entry_callbacks_t *callbacks, void *context_
             }
         
             i = 0;
+			int received_bytes = 0;
             num_blocks = GET_NUM_BLOCKS(header_translated.filesize);
             while(i < num_blocks)
             {
@@ -311,9 +318,10 @@ int read_tar(const char *file_path, entry_callbacks_t *callbacks, void *context_
                     return -6;
                 }
 
-                current_data_size = (i >= num_blocks - 1 ? 
-                                        GET_LAST_BLOCK_PORTION_SIZE(header_translated.filesize) : 
-                                        TAR_BLOCK_SIZE);
+				if(i >= num_blocks - 1)
+					current_data_size = get_last_block_portion_size(header_translated.filesize);
+				else
+					current_data_size = TAR_BLOCK_SIZE;
 
                 buffer[current_data_size] = 0;
 
@@ -324,6 +332,7 @@ int read_tar(const char *file_path, entry_callbacks_t *callbacks, void *context_
                 }
 
                 i++;
+				received_bytes += current_data_size;
             }
 
             if(callbacks->end_cb(&header_translated, entry_index, context_data) != 0)
@@ -364,7 +373,7 @@ void dump_header(header_translated_t *header)
     printf("\n");
 
     printf("  data blocks = %d\n", GET_NUM_BLOCKS(header->filesize));
-    printf("  last block portion = %d\n", GET_LAST_BLOCK_PORTION_SIZE(header->filesize));
+    printf("  last block portion = %d\n", get_last_block_portion_size(header->filesize));
     printf("===========================================\n");
     printf("\n");
 }
@@ -406,4 +415,10 @@ enum entry_type_e get_type_from_char(char raw_type)
     }
 
     return T_OTHER;
+}
+
+int inline get_last_block_portion_size(int filesize)
+{
+	const int partial = filesize % TAR_BLOCK_SIZE;
+	return (partial > 0 ? partial : TAR_BLOCK_SIZE);
 }

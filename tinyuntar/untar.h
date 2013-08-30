@@ -8,7 +8,8 @@
 
 #define IS_BASE256_ENCODED(buffer) (((unsigned char)buffer[0] & 0x80) > 0)
 #define GET_NUM_BLOCKS(filesize) (int)ceil((double)filesize / (double)TAR_BLOCK_SIZE)
-#define GET_LAST_BLOCK_PORTION_SIZE(filesize) (int)(filesize % TAR_BLOCK_SIZE)
+
+int inline get_last_block_portion_size(int filesize);
 
 #ifdef _MSC_VER
 	#define strtoull _strtoui64
@@ -88,7 +89,7 @@ typedef int (*entry_header_callback_t)(header_translated_t *header,
 typedef int (*entry_data_callback_t)(header_translated_t *header, 
 										int entry_index, 
 										void *context_data, 
-										char *block, 
+										unsigned char *block, 
 										int length);
 
 typedef int (*entry_end_callback_t)(header_translated_t *header, 
@@ -106,9 +107,9 @@ typedef struct entry_callbacks_s entry_callbacks_t;
 
 int read_tar(const char *file_path, entry_callbacks_t *callbacks, void *context_data);
 void dump_header(header_translated_t *header);
-unsigned long long decode_base256(const char *buffer);
+unsigned long long decode_base256(unsigned const char *buffer);
 char *trim(char *raw, int length);
-int parse_header(const char buffer[512], header_t *header);
+int parse_header(unsigned const char buffer[512], header_t *header);
 int translate_header(header_t *raw_header, header_translated_t *parsed);
 enum entry_type_e get_type_from_char(char raw_type);
 
